@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+
+  // This value is read from the .env file.
+  url = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  recipes   Recipe[] @relation(name: "user_recipes")
+  reviews   Review[] @relation()
+  favorites Recipe[] @relation(name: "user_favorites")
+  views     Recipe[] @relation(name: "user_views")
+  followers User[]   @relation(name: "user_followers")
+  following User[]   @relation(name: "user_followers")
+  ratings    Rating[]
+}
+
+model Recipe {
+  id           Int          @id @default(autoincrement())
+  title        String
+  description  String
+  instructions String
+  difficulty   Difficulty
+  cuisine      Cuisine
+  recipeIngredients RecipeIngredient[]
+  tags         Tag[]        @relation("recipe_tags")
+  author       User         @relation("user_recipes", fields: [authorId], references: [id])
+  authorId     Int
+  ratings      Rating[]
+  reviews      Review[]
+  views        User[]       @relation("user_views")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  favorites    User[]       @relation("user_favorites")
+}
+
+model Ingredient {
+  id      Int      @id @default(autoincrement())
+  name    String
+  recipeIngredients RecipeIngredient[]
+
+}
+model RecipeIngredient {
+  id           Int         @id @default(autoincrement())
+  recipe       Recipe      @relation(fields: [recipeId], references: [id])
+  recipeId     Int
+  ingredient   Ingredient  @relation(fields: [ingredientId], references: [id])
+  ingredientId Int
+  quantity     Float
+  unit         String      // Add a field for the unit of measurement
+}
+
+model Rating {
+  id       Int    @id @default(autoincrement())
+  value    Int // Assuming a scale of 1-5
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  recipeId Int
+  user     User   @relation(fields: [userId], references: [id])
+  userId   Int
+}
+
+model Review {
+  id       Int    @id @default(autoincrement())
+  text     String
+  recipe   Recipe @relation(fields: [recipeId], references: [id])
+  recipeId Int
+  user     User   @relation(fields: [userId], references: [id])
+  userId   Int
+}
+
+model Tag {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  recipes Recipe[] @relation("recipe_tags")
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum Cuisine {
+  ITALIAN
+  MEXICAN
+  INDIAN
+  CHINESE
+  // Add more cuisines as needed
+}
